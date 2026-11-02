@@ -1,0 +1,5 @@
+bin/
+*.dylib
+*.o
+.DS_Store
+*.zip
