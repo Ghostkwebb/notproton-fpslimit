@@ -39,3 +39,4 @@ cp -f "$TMP_DIR/fpslimit.conf" "$PLUGIN_DIR/fpslimit.conf"
 
 echo "==> Installed notproton-fpslimit successfully!"
 echo "==> Restart Steam to see the FPS Limiter slider in your game's Compatibility tab."
+
