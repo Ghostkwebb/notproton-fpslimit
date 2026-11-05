@@ -67,8 +67,8 @@ Frame 3: [33.3ms - 4 vblanks]
 Without presentation duration awareness, if a frame finishes rendering even 0.1ms past a vertical refresh boundary on a 60Hz or 120Hz ProMotion display, macOS CoreAnimation holds that frame for an entire extra vblank. The result is irregular 3:2 or 5:3 pacing spikes.
 
 **notproton-fpslimit** solves this by:
-1. Pacing drawable acquisition in `CAMetalLayer nextDrawable` using Mach absolute time.
-2. Swizzling `CAMetalDrawable present` to `presentAfterMinimumDuration:`, instructing the CoreAnimation display compositor to hold each frame on glass for an exact integer multiple of refresh intervals.
+1. Pacing CPU frame submission ahead of `CAMetalLayer nextDrawable` using Mach absolute time, interactive QoS priority, and Bresenham fractional clock tracking.
+2. Eliminating swapchain starvation and input latency by letting CoreAnimation and Metal present naturally without artificial compositor holds.
 
 ---
 
@@ -139,7 +139,7 @@ make uninstall
 ## Technical Architecture
 
 * **Layer Hooking**: Swizzles `CAMetalLayer nextDrawable` via Objective-C runtime method swapping.
-* **Drawable Pacing**: Dynamically resolves concrete `CAMetalDrawable` implementation classes and invokes `[drawable presentAfterMinimumDuration:target_duration]`.
+* **Swapchain Integrity**: Paces CPU frame requests before calling into the driver, avoiding swapchain starvation and input queue delays without intrusive compositor holds.
 * **Thread-Local State**: Uses `_Thread_local` reentrancy guards to prevent swizzle recursion, and escalates pacing threads to `QOS_CLASS_USER_INTERACTIVE`.
 * **Architecture Agnostic**: Implements CPU yields via `__builtin_arm_yield()` on Apple Silicon (ARM64) and `_mm_pause()` on Intel (x86_64).
 
